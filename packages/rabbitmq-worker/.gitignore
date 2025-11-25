@@ -1,0 +1,24 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, generated with `go test -c`
+*.test
+
+# Output of the go generate command
+*.pb.go
+
+# Go workspace file
+go.work
+
+# IDE files
+.idea/
+.vscode/
+
+# Editor backup files
+*~
+
+# Local environment variables
+.env
