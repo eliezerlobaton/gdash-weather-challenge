@@ -1,37 +1,94 @@
+# Define um bloco reutilizável com âncoras YAML para propriedades comuns
+x-common-properties: &common-properties
+  restart: unless-stopped
+  networks:
+    - gdash-network
+  env_file:
+    - .env
+
 services:
   mongodb:
+    <<: *common-properties
     image: mongo:7-jammy
     container_name: gdash-mongodb
-    restart: unless-stopped
     ports:
       - "27017:27017"
+    # As variáveis de ambiente para inicialização do MongoDB precisam ser explícitas.
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
     volumes:
       - mongo-data:/data/db
-    networks:
-      - gdash-network
+
   rabbitmq:
+    <<: *common-properties
     image: rabbitmq:3.13-management-alpine
     container_name: gdash-rabbitmq
-    restart: unless-stopped
     ports:
       - "5672:5672"
-      - "15672:15672" # management UI
+      - "15672:15672" # Management UI
+    # O .env injetará RABBITMQ_USER e RABBITMQ_PASS, que o RabbitMQ usa para o usuário padrão.
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
-    networks:
-      - gdash-network
+
+  # --- SERVIÇOS DA APLICAÇÃO ---
+
+  gdash-api:
+    <<: *common-properties
+    build:
+      context: ./packages/gdash-api
+      dockerfile: Dockerfile
+    container_name: gdash-api
+    ports:
+      - "3000:3000"
+    environment:
+      MONGODB_URI: "mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017/${MONGO_DATABASE}?authSource=admin"
+      RABBITMQ_URL: "amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672"
+      PORT: 3000
+      FRONTEND_URL: ${FRONTEND_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    depends_on:
+      - mongodb
+      - rabbitmq
+
+  rabbitmq-worker:
+    <<: *common-properties
+    build:
+      context: ./packages/rabbitmq-worker
+      dockerfile: Dockerfile
+    container_name: gdash-rabbitmq-worker
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      API_URL: http://gdash-api:3000
+    depends_on:
+      - rabbitmq
+      - gdash-api
+
+  weather-data-collector:
+    <<: *common-properties
+    build:
+      context: ./packages/weather-data-collector
+      dockerfile: Dockerfile
+    container_name: gdash-weather-collector
+    environment:
+      # Variável específica para a comunicação entre serviços.
+      # Todas as outras (USER, PASS, QUEUE, LATITUDE, etc.) virão do .env
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      - rabbitmq
+
 volumes:
   mongo-data:
     driver: local
   rabbitmq-data:
     driver: local
+
 networks:
   gdash-network:
     driver: bridge
