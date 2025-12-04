@@ -4,8 +4,8 @@ import logging
 import time
 from datetime import datetime
 
-from ..interfaces.weather_collector import WeatherCollector
-from ..interfaces.config_provider import ConfigProviderProtocol
+from interfaces.weather_collector import WeatherCollector
+from interfaces.config_provider import ConfigProviderProtocol
 
 
 logger = logging.getLogger(__name__)

@@ -1,14 +1,14 @@
 import logging
 import time
 
-from .config import Config
-from .weather.collector import create_weather_collector
-from .weather.processors import WeatherProcessor
-from .messaging.rabbitmq import RabbitMQPublisher
-from .interfaces.weather_collector import WeatherCollectorProtocol
-from .interfaces.data_processor import DataProcessorProtocol
-from .interfaces.message_publisher import MessagePublisherProtocol
-from .interfaces.config_provider import ConfigProviderProtocol
+from config import Config
+from weather.collector import create_weather_collector
+from weather.processors import WeatherProcessor
+from messaging.rabbitmq import RabbitMQPublisher
+from interfaces.weather_collector import WeatherCollectorProtocol
+from interfaces.data_processor import DataProcessorProtocol
+from interfaces.message_publisher import MessagePublisherProtocol
+from interfaces.config_provider import ConfigProviderProtocol
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
