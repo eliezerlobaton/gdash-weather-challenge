@@ -7,8 +7,8 @@ class Config:
 
     RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
     RABBITMQ_PORT = os.getenv("RABBITMQ_PORT", "5672")
-    RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
-    RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "guest")
+    RABBITMQ_USER = os.getenv("RABBITMQ_USER")
+    RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
     QUEUE_NAME = os.getenv("RABBITMQ_QUEUE", "weather_data")
 
     RABBITMQ_URL = (
