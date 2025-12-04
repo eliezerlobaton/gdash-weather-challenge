@@ -23,8 +23,8 @@ var _ interfaces.ConfigProvider = (*Config)(nil)
 func Load() *Config {
 	host := getEnv("RABBITMQ_HOST", "localhost")
 	port := getEnv("RABBITMQ_PORT", "5672")
-	user := getEnv("RABBITMQ_USER", "guest")
-	pass := getEnv("RABBITMQ_PASS", "guest")
+	user := getEnv("RABBITMQ_USER", "")
+	pass := getEnv("RABBITMQ_PASS", "")
 
 	rabbitmqURL := fmt.Sprintf("amqp://%s:%s@%s:%s/", user, pass, host, port)
 

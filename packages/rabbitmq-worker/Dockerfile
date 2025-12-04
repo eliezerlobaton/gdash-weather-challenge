@@ -1,10 +1,10 @@
 # Usar a imagem Go como base única
-FROM golang:1.21-alpine
+FROM golang:1.25-alpine
 
 WORKDIR /app
 
-# Instalar versão específica de certificados e criar usuário não-root
-RUN apk --no-cache add ca-certificates=20250911-r0 && adduser -D -s /bin/sh appuser
+# Instalar certificados e criar usuário não-root
+RUN apk --no-cache add ca-certificates && adduser -D -s /bin/sh appuser
 
 # Copiar arquivos de dependência e baixá-las (aproveita o cache do Docker)
 COPY go.mod go.sum ./
