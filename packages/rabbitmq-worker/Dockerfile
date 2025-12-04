@@ -1,4 +1,4 @@
-# Usar a imagem Go como base única
+# Dockerfile para Demo/Desenvolvimento
 FROM golang:1.25-alpine
 
 WORKDIR /app
@@ -6,23 +6,23 @@ WORKDIR /app
 # Instalar certificados e criar usuário não-root
 RUN apk --no-cache add ca-certificates && adduser -D -s /bin/sh appuser
 
-# Copiar arquivos de dependência e baixá-las (aproveita o cache do Docker)
+# Copiar arquivos de dependência
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copiar todo o código-fonte
+# Copiar código-fonte
 COPY . .
 
-# Compilar a aplicação Go E mudar o proprietário em um único passo
+# Compilar a aplicação
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o rabbitmq-worker . && \
     chown -R appuser:appuser /app
 
-# Mudar para o usuário não-root
+# Mudar para usuário não-root
 USER appuser
 
-# Healthcheck para verificar se o binário é executável
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD ./rabbitmq-worker --help > /dev/null 2>&1 || exit 1
+# Healthcheck simples - verifica se o processo está rodando
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD pgrep -f rabbitmq-worker || exit 1
 
-# Comando para executar a aplicação
+# Executar a aplicação
 CMD ["./rabbitmq-worker"]
