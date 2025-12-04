@@ -118,8 +118,8 @@ O serviço é configurado através de variáveis de ambiente, seguindo as melhor
 | -------------------- | ------------------------------------------------------------------------------------------ | ------------------------------- |
 | `RABBITMQ_HOST` | Hostname do servidor RabbitMQ. | `localhost` |
 | `RABBITMQ_PORT` | Porta do servidor RabbitMQ. | `5672` |
-| `RABBITMQ_USER` | Usuário para autenticação no RabbitMQ. | `guest` |
-| `RABBITMQ_PASS` | Senha para autenticação no RabbitMQ. | `guest` |
+| `RABBITMQ_USER` | Usuário para autenticação no RabbitMQ. | *(obrigatório)* |
+| `RABBITMQ_PASS` | Senha para autenticação no RabbitMQ. | *(obrigatório)* |
 | `RABBITMQ_QUEUE` | Nome da fila para onde as mensagens serão publicadas. | `weather_data` |
 | `LOCATION_NAME` | Nome da cidade para exibição. | `Recife, Brazil` |
 | `LATITUDE` | Latitude geográfica para a coleta dos dados. | `-8.0542` |
