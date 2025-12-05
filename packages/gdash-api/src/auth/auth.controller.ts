@@ -24,13 +24,13 @@ export class AuthController {
         email: {
           type: 'string',
           format: 'email',
-          example: 'chanchito@chanco.com',
+          example: 'usuario@exemplo.com',
           description: 'Email cadastrado no sistema',
         },
         password: {
           type: 'string',
           format: 'password',
-          example: '123456',
+          example: 'senha123',
           description: 'Senha do usuário (mínimo 6 caracteres)',
           minLength: 6,
         },
@@ -39,15 +39,16 @@ export class AuthController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Login realizado com sucesso. Retorna token JWT e dados do usuário.',
+    description:
+      'Login realizado com sucesso. Retorna token JWT e dados do usuário.',
     schema: {
       example: {
         access_token:
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzUwODRhNGRlMGJjMDAwMTNhYTkyNzEiLCJlbWFpbCI6ImNoYW5jaGl0b0BjaGFuY28uY29tIiwiaWF0IjoxNzMzMzA2MTQwLCJleHAiOjE3MzMzOTI1NDB9.abc123',
         user: {
-          id: '675084a4de0bc00013aa9271',
-          name: 'Admin User',
-          email: 'chanchito@chanco.com',
+          id: '507f1f77bcf86cd799439011',
+          name: 'João Silva',
+          email: 'usuario@exemplo.com',
         },
       },
     },
@@ -69,7 +70,10 @@ export class AuthController {
     schema: {
       example: {
         statusCode: 400,
-        message: ['email must be an email', 'password must be longer than or equal to 6 characters'],
+        message: [
+          'email must be an email',
+          'password must be longer than or equal to 6 characters',
+        ],
         error: 'Bad Request',
       },
     },

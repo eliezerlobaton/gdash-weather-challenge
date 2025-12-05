@@ -39,16 +39,19 @@ export class UsersController {
     schema: {
       example: [
         {
-          _id: '675084a4de0bc00013aa9271',
-          name: 'Admin User',
-          email: 'chanchito@chanco.com',
+          _id: '507f1f77bcf86cd799439011',
+          name: 'João Silva',
+          email: 'usuario@exemplo.com',
           createdAt: '2025-12-01T10:00:00.000Z',
           updatedAt: '2025-12-01T10:00:00.000Z',
         },
       ],
     },
   })
-  @ApiResponse({ status: 401, description: 'Não autorizado - Token JWT inválido ou ausente' })
+  @ApiResponse({
+    status: 401,
+    description: 'Não autorizado - Token JWT inválido ou ausente',
+  })
   async findAll() {
     return this.usersService.findAll();
   }
@@ -63,17 +66,18 @@ export class UsersController {
   })
   @ApiParam({
     name: 'id',
-    description: 'ID do MongoDB do usuário (formato: ObjectId de 24 caracteres hexadecimais)',
-    example: '675084a4de0bc00013aa9271',
+    description:
+      'ID do MongoDB do usuário (formato: ObjectId de 24 caracteres hexadecimais)',
+    example: '507f1f77bcf86cd799439011',
   })
   @ApiResponse({
     status: 200,
     description: 'Usuário encontrado',
     schema: {
       example: {
-        _id: '675084a4de0bc00013aa9271',
-        name: 'Admin User',
-        email: 'chanchito@chanco.com',
+        _id: '507f1f77bcf86cd799439011',
+        name: 'João Silva',
+        email: 'usuario@exemplo.com',
         createdAt: '2025-12-01T10:00:00.000Z',
         updatedAt: '2025-12-01T10:00:00.000Z',
       },
@@ -174,7 +178,7 @@ export class UsersController {
   @ApiParam({
     name: 'id',
     description: 'ID do MongoDB do usuário a ser atualizado',
-    example: '675084a4de0bc00013aa9271',
+    example: '507f1f77bcf86cd799439011',
   })
   @ApiBody({
     description: 'Dados a serem atualizados (todos opcionais)',
@@ -206,7 +210,7 @@ export class UsersController {
     description: 'Usuário atualizado com sucesso',
     schema: {
       example: {
-        _id: '675084a4de0bc00013aa9271',
+        _id: '507f1f77bcf86cd799439011',
         name: 'João Silva Atualizado',
         email: 'joao.novo@example.com',
         updatedAt: '2025-12-04T10:30:00.000Z',
@@ -214,7 +218,10 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
-  @ApiResponse({ status: 409, description: 'Email já está em uso por outro usuário' })
+  @ApiResponse({
+    status: 409,
+    description: 'Email já está em uso por outro usuário',
+  })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   async update(
     @Param('id') id: string,
@@ -234,7 +241,7 @@ export class UsersController {
   @ApiParam({
     name: 'id',
     description: 'ID do MongoDB do usuário a ser removido',
-    example: '675084a4de0bc00013aa9271',
+    example: '507f1f77bcf86cd799439011',
   })
   @ApiResponse({
     status: 200,
@@ -242,7 +249,7 @@ export class UsersController {
     schema: {
       example: {
         message: 'Usuário deletado com sucesso',
-        deletedId: '675084a4de0bc00013aa9271',
+        deletedId: '507f1f77bcf86cd799439011',
       },
     },
   })
