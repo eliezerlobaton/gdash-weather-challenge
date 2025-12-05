@@ -3,8 +3,8 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-# Instala pnpm
-RUN corepack enable && corepack prepare pnpm@10.22.0 --activate
+# Instala pnpm via npm (mais confiável)
+RUN npm install -g pnpm@10.22.0
 
 # Copia arquivos de dependências
 COPY package.json pnpm-lock.yaml ./
