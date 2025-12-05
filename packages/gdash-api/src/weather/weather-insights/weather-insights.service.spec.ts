@@ -1,14 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { WeatherInsightsService } from './weather-insights.service';
 import { getModelToken } from '@nestjs/mongoose';
 
 describe('WeatherInsightsService', () => {
   let service: WeatherInsightsService;
   let mockWeatherModel: any;
+  let mockConfigService: any;
 
   beforeEach(async () => {
     mockWeatherModel = {
       find: jest.fn(),
+    };
+
+    mockConfigService = {
+      get: jest.fn().mockReturnValue('fake-gemini-api-key'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -17,6 +23,10 @@ describe('WeatherInsightsService', () => {
         {
           provide: getModelToken('WeatherLog'),
           useValue: mockWeatherModel,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -140,8 +150,14 @@ describe('WeatherInsightsService', () => {
           analytics: { max_precipitation_prob: 10 },
         }));
 
-      const alerts = service['generateWeatherAlerts'](mockLogs, 40, 50);
-      expect(alerts.some((a) => a.includes('Calor extremo'))).toBe(true);
+      const alerts = service['generateWeatherAlerts'](
+        mockLogs,
+        40,
+        50,
+      ) as string[];
+      expect(alerts.some((a: string) => a.includes('Calor extremo'))).toBe(
+        true,
+      );
     });
 
     it('should detect weather patterns', () => {
@@ -176,18 +192,32 @@ describe('WeatherInsightsService', () => {
       expect(summary).toContain('agradável');
     });
 
-    it('should generate recommendations based on conditions', () => {
-      const recommendations = service['generateRecommendations'](
-        'muito_quente',
-        ['🔥 Calor extremo'],
-        30,
-        ['Padrão de chuva'],
-      );
+    it('should use fallback insights when Gemini fails', async () => {
+      const mockLogs = Array(48)
+        .fill(null)
+        .map(() => ({
+          current: { temperature: 25, humidity: 60, wind_speed: 10 },
+          analytics: { max_precipitation_prob: 10 },
+          timestamp: new Date().toISOString(),
+          location: { city: 'Recife' },
+        }));
 
-      expect(recommendations.length).toBeGreaterThan(0);
-      expect(recommendations.some((r) => r.includes('protetor solar'))).toBe(
-        true,
-      );
+      const execMock = jest.fn().mockResolvedValue(mockLogs);
+      const sortMock = jest.fn().mockReturnValue({ exec: execMock });
+      const limitMock = jest.fn().mockReturnValue({ sort: sortMock });
+      (mockWeatherModel.find as jest.Mock).mockReturnValue({
+        limit: limitMock,
+      });
+
+      jest
+        .spyOn(service['model'], 'generateContent')
+        .mockRejectedValue(new Error('Gemini API error'));
+
+      const result = (await service.generateInsights()) as {
+        aiInsights: { source: string };
+      };
+
+      expect(result.aiInsights.source).toBe('Fallback Analysis');
     });
   });
 

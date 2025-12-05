@@ -1,318 +1,273 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
 import { WeatherLog } from '../schemas/weather-log.schema';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+interface InsightsData {
+  averageTemperature: number;
+  maxTemperature: { value: number; city: string; date: Date };
+  minTemperature: { value: number; city: string; date: Date };
+  averageHumidity: number;
+  maxWindSpeed: { value: number; city: string; date: Date };
+  mostFrequentCondition: string;
+  citiesCount: number;
+  totalRecords: number;
+  periodStart: Date;
+  periodEnd: Date;
+}
+
+interface AIInsights {
+  textualSummary: string;
+  keyFindings: string[];
+  recommendations: string[];
+  forecast: string;
+  healthImpact: string;
+  activities: {
+    recommended: string[];
+    avoid: string[];
+  };
+  condition: string;
+  alerts: string[];
+  patterns: string[];
+  source: string;
+  model: string;
+}
 
 @Injectable()
 export class WeatherInsightsService {
+  private readonly logger = new Logger(WeatherInsightsService.name);
+  private readonly genAI: GoogleGenerativeAI | null;
+  private readonly modelName: string;
+
   constructor(
     @InjectModel('WeatherLog') private weatherModel: Model<WeatherLog>,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    this.modelName =
+      this.configService.get<string>('GEMINI_MODEL') || 'gemini-2.5-flash-lite';
 
-  async generateInsights(): Promise<any> {
+    if (!apiKey) {
+      this.logger.warn('GEMINI_API_KEY não configurada, usando fallback');
+      this.genAI = null;
+    } else {
+      this.genAI = new GoogleGenerativeAI(apiKey);
+      this.logger.log(`Gemini configurado com modelo ${this.modelName}`);
+    }
+  }
+
+  async generateInsightsWithAI(): Promise<AIInsights> {
     const logs = await this.weatherModel
       .find()
-      .limit(168)
-      .sort({ createdAt: -1 })
+      .sort({ timestamp: -1 })
+      .limit(100)
       .exec();
 
     if (logs.length === 0) {
-      return {
-        message: 'Dados insuficientes para gerar insights',
-        totalRecords: 0,
-      };
+      return this.getFallbackInsights();
     }
 
-    const temps = logs.map((log) => log.current?.temperature ?? 0);
-    const humidities = logs.map((log) => log.current?.humidity ?? 0);
-    const windSpeeds = logs.map((log) => log.current?.wind_speed ?? 0);
+    const stats = this.calculateStats(logs);
+    const prompt = this.buildPrompt(stats);
 
-    const avgTemp = temps.reduce((sum, temp) => sum + temp, 0) / temps.length;
-    const avgHumidity =
-      humidities.reduce((sum, hum) => sum + hum, 0) / humidities.length;
-    const maxTemp = Math.max(...temps);
-    const minTemp = Math.min(...temps);
-
-    const condition = this.classifyWeatherCondition(avgTemp, avgHumidity, logs);
-    const trend = this.detectTemperatureTrend(logs);
-    const comfortScore = this.calculateComfortScore(
-      avgTemp,
-      avgHumidity,
-      windSpeeds,
-    );
-    const alerts = this.generateWeatherAlerts(logs, avgTemp, avgHumidity);
-    const patterns = this.detectWeatherPatterns(logs);
-    const summary = this.generateTextualSummary(
-      logs,
-      avgTemp,
-      avgHumidity,
-      trend,
-      condition,
-    );
-
-    return {
-      summary: {
-        totalRecords: logs.length,
-        averageTemperature: Math.round(avgTemp * 10) / 10,
-        averageHumidity: Math.round(avgHumidity * 10) / 10,
-        maxTemperature: maxTemp,
-        minTemperature: minTemp,
-        temperatureTrend: trend,
-        comfortScore: Math.round(comfortScore),
-      },
-      aiInsights: {
-        condition,
-        alerts,
-        patterns,
-        textualSummary: summary,
-        recommendations: this.generateRecommendations(
-          condition,
-          alerts,
-          comfortScore,
-          patterns,
-        ),
-      },
-      generatedAt: new Date().toISOString(),
-    };
-  }
-
-  async refreshInsights(): Promise<any> {
-    const result = (await this.generateInsights()) as Record<string, any>;
-    return {
-      message: 'Insights atualizados com sucesso',
-      lastUpdated: new Date().toISOString(),
-      ...result,
-    };
-  }
-
-  private classifyWeatherCondition(
-    avgTemp: number,
-    avgHumidity: number,
-    logs: WeatherLog[],
-  ): string {
-    const recentLogs = logs.slice(0, 24);
-    const precipitationProb =
-      recentLogs.reduce((sum, log) => {
-        return sum + (log.analytics?.max_precipitation_prob || 0);
-      }, 0) / recentLogs.length;
-
-    if (precipitationProb > 70) return 'chuvoso';
-    if (avgTemp > 35) return 'muito_quente';
-    if (avgTemp > 28 && avgHumidity > 80) return 'quente_umido';
-    if (avgTemp > 25) return 'quente';
-    if (avgTemp < 5) return 'muito_frio';
-    if (avgTemp < 15) return 'frio';
-    if (avgHumidity > 85) return 'muito_umido';
-    return 'agradavel';
-  }
-
-  private detectTemperatureTrend(logs: WeatherLog[]): string {
-    if (logs.length < 48) return 'dados_insuficientes';
-
-    const recent24h = logs.slice(0, 24);
-    const previous24h = logs.slice(24, 48);
-
-    const recentAvg =
-      recent24h.reduce((sum, log) => sum + (log.current?.temperature ?? 0), 0) /
-      recent24h.length;
-    const previousAvg =
-      previous24h.reduce(
-        (sum, log) => sum + (log.current?.temperature ?? 0),
-        0,
-      ) / previous24h.length;
-
-    const diff = recentAvg - previousAvg;
-
-    if (diff > 3) return 'subindo_rapido';
-    if (diff > 1) return 'subindo';
-    if (diff < -3) return 'caindo_rapido';
-    if (diff < -1) return 'caindo';
-    return 'estavel';
-  }
-
-  private calculateComfortScore(
-    avgTemp: number,
-    avgHumidity: number,
-    windSpeeds: number[],
-  ): number {
-    let score = 100;
-
-    if (avgTemp < 18 || avgTemp > 26) {
-      const tempPenalty = Math.abs(avgTemp - 22) * 3;
-      score -= Math.min(tempPenalty, 40);
-    }
-
-    if (avgHumidity < 30 || avgHumidity > 70) {
-      const humidityPenalty = Math.abs(avgHumidity - 50) * 1.5;
-      score -= Math.min(humidityPenalty, 30);
-    }
-
-    const avgWind =
-      windSpeeds.reduce((sum, wind) => sum + wind, 0) / windSpeeds.length;
-    if (avgWind > 20 || avgWind < 2) {
-      score -= 15;
-    }
-
-    return Math.max(0, Math.min(100, score));
-  }
-
-  private generateWeatherAlerts(
-    logs: WeatherLog[],
-    avgTemp: number,
-    avgHumidity: number,
-  ): string[] {
-    const alerts: string[] = [];
-    const recentLogs = logs.slice(0, 12);
-
-    if (avgTemp > 35)
-      alerts.push('🔥 Calor extremo - Evite exposição prolongada ao sol');
-    if (avgTemp < 5) alerts.push('🧊 Frio intenso - Vista roupas adequadas');
-    if (avgHumidity > 85)
-      alerts.push('💧 Umidade muito alta - Sensação de abafamento');
-    if (avgHumidity < 20) alerts.push('🏜️ Ar muito seco - Hidrate-se bem');
-
-    const highPrecipProb = recentLogs.some(
-      (log) => (log.analytics?.max_precipitation_prob || 0) > 80,
-    );
-    if (highPrecipProb)
-      alerts.push('🌧️ Alta probabilidade de chuva nas próximas horas');
-
-    const tempVariation =
-      Math.max(...recentLogs.map((l) => l.current?.temperature ?? 0)) -
-      Math.min(...recentLogs.map((l) => l.current?.temperature ?? 0));
-    if (tempVariation > 10) alerts.push('🌡️ Variação brusca de temperatura');
-
-    const avgWind =
-      recentLogs.reduce((sum, log) => sum + (log.current?.wind_speed ?? 0), 0) /
-      recentLogs.length;
-    if (avgWind < 5 && avgHumidity > 70)
-      alerts.push('🌫️ Baixa ventilação pode afetar qualidade do ar');
-
-    return alerts;
-  }
-
-  private detectWeatherPatterns(logs: WeatherLog[]): string[] {
-    const patterns: string[] = [];
-    const recentLogs = logs.slice(0, 72);
-
-    const rainHours = recentLogs.filter((log) => {
-      const precipitationProb: number =
-        log.analytics?.max_precipitation_prob || 0;
-      return precipitationProb > 60;
-    }).length;
-
-    if (rainHours >= 12) {
-      patterns.push(
-        `Padrão de chuva: ${Math.round((rainHours / 72) * 100)}% das últimas 72h com alta probabilidade de chuva`,
-      );
-    }
-
-    const tempChanges: number[] = [];
-    for (let i = 1; i < recentLogs.length; i++) {
-      const diff = Math.abs(
-        (recentLogs[i - 1].current?.temperature ?? 0) -
-          (recentLogs[i].current?.temperature ?? 0),
-      );
-      if (diff > 3) {
-        tempChanges.push(diff);
+    try {
+      if (!this.genAI) {
+        throw new Error('GEMINI_API_KEY não configurada');
       }
-    }
 
-    if (tempChanges.length > 5) {
-      patterns.push(
-        `Padrão de variação térmica: ${tempChanges.length} mudanças significativas de temperatura nas últimas 72h`,
-      );
-    }
+      const model = this.genAI.getGenerativeModel({ model: this.modelName });
 
-    const highHumidityHours = recentLogs.filter(
-      (log) => (log.current?.humidity ?? 0) > 80,
-    ).length;
-    if (highHumidityHours > 24) {
-      patterns.push(
-        `Padrão de alta umidade: ${highHumidityHours} horas com umidade acima de 80%`,
-      );
-    }
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 800,
+        },
+      });
 
-    return patterns;
+      const aiResponse = result.response.text();
+
+      return this.parseAIResponse(aiResponse, stats);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Erro ao gerar insights com Gemini: ${errorMessage}`);
+      this.logger.warn('Usando insights de fallback');
+      return this.getFallbackInsights();
+    }
   }
 
-  private generateTextualSummary(
-    logs: WeatherLog[],
-    avgTemp: number,
-    avgHumidity: number,
-    trend: string,
-    condition: string,
-  ): string {
-    const days = Math.ceil(logs.length / 24);
-    const trendText = {
-      subindo_rapido: 'com tendência de aquecimento rápido',
-      subindo: 'com leve tendência de aquecimento',
-      caindo_rapido: 'com tendência de resfriamento rápido',
-      caindo: 'com leve tendência de resfriamento',
-      estavel: 'com temperaturas estáveis',
-      dados_insuficientes: '',
-    };
+  private calculateStats(logs: WeatherLog[]): InsightsData {
+    const temperatures = logs.map((l) => l.current.temperature);
+    const humidities = logs.map((l) => l.current.humidity);
 
-    const conditionText = {
-      muito_quente: 'muito quente',
-      quente_umido: 'quente e úmido',
-      quente: 'quente',
-      agradavel: 'agradável',
-      frio: 'frio',
-      muito_frio: 'muito frio',
-      chuvoso: 'chuvoso',
-      muito_umido: 'muito úmido',
-    };
+    const avgTemp =
+      temperatures.reduce((a, b) => a + b, 0) / temperatures.length;
+    const avgHumidity =
+      humidities.reduce((a, b) => a + b, 0) / humidities.length;
 
-    return `Nos últimos ${days} dias, a temperatura média foi de ${Math.round(avgTemp)}°C com umidade de ${Math.round(avgHumidity)}%. O clima está ${conditionText[condition] || condition} ${trendText[trend] || ''}.`;
+    const maxTempLog = logs.reduce((max, log) =>
+      log.current.temperature > max.current.temperature ? log : max,
+    );
+    const minTempLog = logs.reduce((min, log) =>
+      log.current.temperature < min.current.temperature ? log : min,
+    );
+    const maxWindLog = logs.reduce((max, log) =>
+      log.current.wind_speed > max.current.wind_speed ? log : max,
+    );
+
+    const conditions = logs.map((l) => l.condition_classification || 'Unknown');
+    const conditionCounts = conditions.reduce(
+      (acc, c) => {
+        acc[c] = (acc[c] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+    const mostFrequent = Object.entries(conditionCounts).sort(
+      ([, a], [, b]) => b - a,
+    )[0][0];
+
+    const cities = new Set(logs.map((l) => l.location.city)).size;
+
+    return {
+      averageTemperature: Number(avgTemp.toFixed(1)),
+      maxTemperature: {
+        value: maxTempLog.current.temperature,
+        city: maxTempLog.location.city,
+        date: new Date(maxTempLog.timestamp),
+      },
+      minTemperature: {
+        value: minTempLog.current.temperature,
+        city: minTempLog.location.city,
+        date: new Date(minTempLog.timestamp),
+      },
+      averageHumidity: Number(avgHumidity.toFixed(1)),
+      maxWindSpeed: {
+        value: maxWindLog.current.wind_speed,
+        city: maxWindLog.location.city,
+        date: new Date(maxWindLog.timestamp),
+      },
+      mostFrequentCondition: mostFrequent,
+      citiesCount: cities,
+      totalRecords: logs.length,
+      periodStart: new Date(logs[logs.length - 1].timestamp),
+      periodEnd: new Date(logs[0].timestamp),
+    };
   }
 
-  private generateRecommendations(
-    condition: string,
-    alerts: string[],
-    comfortScore: number,
-    patterns: string[],
-  ): string[] {
-    const recommendations: string[] = [];
+  private buildPrompt(stats: InsightsData): string {
+    return `Você é um analista meteorológico. Gere um relatório climático em JSON em português do Brasil.
 
-    if (comfortScore < 30) {
-      recommendations.push(
-        'Condições climáticas desconfortáveis - planeje atividades internas',
-      );
-    } else if (comfortScore > 80) {
-      recommendations.push(
-        'Excelentes condições climáticas - ideal para atividades ao ar livre',
-      );
+Dados Climáticos:
+Temperatura: ${stats.averageTemperature}°C
+Umidade: ${stats.averageHumidity}%
+Vento: ${stats.maxWindSpeed.value} km/h
+
+Retorne APENAS JSON válido em português:
+{
+"textualSummary": "Resumo breve do clima em português",
+"keyFindings": ["observação 1", "observação 2"],
+"recommendations": ["dica 1", "dica 2"],
+"forecast": "previsão de tendência",
+"healthImpact": "impacto na saúde",
+"activities": {"recommended": ["atividade 1"], "avoid": ["evitar 1"]},
+"condition": "${stats.mostFrequentCondition}",
+"alerts": [],
+"patterns": []
+}`;
+  }
+
+  private parseAIResponse(aiResponse: string, stats: InsightsData): AIInsights {
+    try {
+      // Remove markdown code blocks se existirem
+      const cleanResponse = aiResponse
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '');
+
+      // Busca JSON completo na resposta (com chaves balanceadas)
+      const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Resposta não contém JSON válido');
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+
+      return {
+        textualSummary:
+          (parsed.textualSummary as string) || 'Análise não disponível',
+        keyFindings: Array.isArray(parsed.keyFindings)
+          ? (parsed.keyFindings as string[])
+          : [],
+        recommendations: Array.isArray(parsed.recommendations)
+          ? (parsed.recommendations as string[])
+          : [],
+        forecast: (parsed.forecast as string) || 'Previsão não disponível',
+        healthImpact: (parsed.healthImpact as string) || 'Impacto não avaliado',
+        activities: {
+          recommended:
+            (parsed.activities as { recommended?: string[] })?.recommended ||
+            [],
+          avoid: (parsed.activities as { avoid?: string[] })?.avoid || [],
+        },
+        condition: (parsed.condition as string) || stats.mostFrequentCondition,
+        alerts: Array.isArray(parsed.alerts) ? (parsed.alerts as string[]) : [],
+        patterns: Array.isArray(parsed.patterns)
+          ? (parsed.patterns as string[])
+          : [],
+        source: 'gemini',
+        model: this.modelName,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Erro ao parsear resposta da IA: ${errorMessage}`);
+      return this.getFallbackInsights();
     }
+  }
 
-    if (condition === 'muito_quente') {
-      recommendations.push('Use protetor solar e mantenha-se hidratado');
-    }
+  private getFallbackInsights(): AIInsights {
+    return {
+      textualSummary:
+        'Insights de IA temporariamente indisponíveis (limite de requisições ou erro de conexão). Dados estatísticos básicos estão sendo exibidos.',
+      keyFindings: [
+        'Serviço de IA temporariamente indisponível',
+        'Usando análise básica de dados',
+        'Tente novamente em alguns minutos',
+      ],
+      recommendations: [
+        'Aguarde alguns minutos antes de solicitar novos insights',
+        'Os dados climáticos continuam sendo coletados normalmente',
+      ],
+      forecast: 'Previsão indisponível',
+      healthImpact: 'Análise de impacto na saúde indisponível',
+      activities: {
+        recommended: [],
+        avoid: [],
+      },
+      condition: 'Dados insuficientes',
+      alerts: ['IA offline - usando fallback'],
+      patterns: [],
+      source: 'fallback',
+      model: this.modelName || 'none',
+    };
+  }
 
-    if (condition === 'chuvoso') {
-      recommendations.push('Leve guarda-chuva e evite áreas alagáveis');
-    }
+  async getInsights() {
+    const aiInsights = await this.generateInsightsWithAI();
+    const logs = await this.weatherModel
+      .find()
+      .sort({ timestamp: -1 })
+      .limit(100)
+      .exec();
+    const stats = this.calculateStats(logs);
 
-    if (condition === 'frio' || condition === 'muito_frio') {
-      recommendations.push('Vista roupas em camadas e proteja extremidades');
-    }
-
-    if (patterns.some((p) => p.includes('chuva'))) {
-      recommendations.push('Prepare-se para dias chuvosos consecutivos');
-    }
-
-    if (patterns.some((p) => p.includes('variação'))) {
-      recommendations.push(
-        'Espere variações térmicas - vista roupas em camadas',
-      );
-    }
-
-    if (alerts.some((a) => a.includes('umidade'))) {
-      recommendations.push(
-        'Cuide de problemas respiratórios devido à alta umidade',
-      );
-    }
-
-    return recommendations;
+    return {
+      ...stats,
+      ai: aiInsights,
+      generatedAt: new Date(),
+    };
   }
 }
