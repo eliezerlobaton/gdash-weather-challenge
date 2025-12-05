@@ -55,7 +55,8 @@ export class WeatherController {
           windDirection: 135,
           pressure: 1013,
           condition: 'Parcialmente nublado',
-          description: 'Céu parcialmente nublado com possibilidade de chuva leve',
+          description:
+            'Céu parcialmente nublado com possibilidade de chuva leve',
           icon: '02d',
         },
       },
@@ -97,7 +98,8 @@ export class WeatherController {
     required: false,
     type: Number,
     example: 100,
-    description: 'Quantidade máxima de registros por página (padrão: 100, máximo: 1000)',
+    description:
+      'Quantidade máxima de registros por página (padrão: 100, máximo: 1000)',
   })
   @ApiQuery({
     name: 'page',
@@ -209,7 +211,7 @@ export class WeatherController {
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   async getInsights(): Promise<any> {
-    return this.weatherInsightsService.generateInsights();
+    return this.weatherInsightsService.getInsights();
   }
 
   @Get('export.csv')
@@ -236,7 +238,10 @@ export class WeatherController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Token JWT não fornecido ou inválido' })
+  @ApiResponse({
+    status: 401,
+    description: 'Token JWT não fornecido ou inválido',
+  })
   async exportCSV(@Res() res: Response) {
     const csv = await this.weatherService.exportCSV();
     res.header('Content-Type', 'text/csv');
@@ -269,7 +274,10 @@ export class WeatherController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Token JWT não fornecido ou inválido' })
+  @ApiResponse({
+    status: 401,
+    description: 'Token JWT não fornecido ou inválido',
+  })
   async exportXLSX(@Res() res: Response) {
     const buffer = await this.weatherService.exportXLSX();
     res.header(
@@ -290,6 +298,6 @@ export class WeatherController {
   @ApiResponse({ status: 200, description: 'Insights atualizados' })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   async refreshInsights(): Promise<any> {
-    return this.weatherInsightsService.refreshInsights();
+    return this.weatherInsightsService.getInsights();
   }
 }
