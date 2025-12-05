@@ -5,24 +5,9 @@ x-common-properties: &common-properties
     - gdash-network
   env_file:
     - .env
-
 services:
-  mongodb:
-    <<: *common-properties
-    image: mongo:7-jammy
-    container_name: gdash-mongodb
-    ports:
-      - "27017:27017"
-    # As variáveis de ambiente para inicialização do MongoDB precisam ser explícitas.
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
-    volumes:
-      - mongo-data:/data/db
-
   rabbitmq:
-    <<: *common-properties
+    !!merge <<: *common-properties
     image: rabbitmq:3.13-management-alpine
     container_name: gdash-rabbitmq
     ports:
@@ -34,11 +19,15 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
-
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
   # --- SERVIÇOS DA APLICAÇÃO ---
-
   gdash-api:
-    <<: *common-properties
+    !!merge <<: *common-properties
     build:
       context: ./packages/gdash-api
       dockerfile: Dockerfile
@@ -46,19 +35,26 @@ services:
     ports:
       - "3000:3000"
     environment:
-      MONGODB_URI: "mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017/${MONGO_DATABASE}?authSource=admin"
+      MONGODB_URI: ${MONGODB_URI}
       RABBITMQ_URL: "amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672"
       PORT: 3000
       FRONTEND_URL: ${FRONTEND_URL}
       JWT_SECRET: ${JWT_SECRET}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL}
     depends_on:
-      - mongodb
-      - rabbitmq
-
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
   rabbitmq-worker:
-    <<: *common-properties
+    !!merge <<: *common-properties
     build:
       context: ./packages/rabbitmq-worker
       dockerfile: Dockerfile
@@ -67,28 +63,28 @@ services:
       RABBITMQ_HOST: rabbitmq
       API_URL: http://gdash-api:3000
     depends_on:
-      - rabbitmq
-      - gdash-api
-
+      rabbitmq:
+        condition: service_healthy
+      gdash-api:
+        condition: service_healthy
   weather-data-collector:
-    <<: *common-properties
+    !!merge <<: *common-properties
     build:
       context: ./packages/weather-data-collector
       dockerfile: Dockerfile
     container_name: gdash-weather-collector
     environment:
-      # Variável específica para a comunicação entre serviços.
-      # Todas as outras (USER, PASS, QUEUE, LATITUDE, etc.) virão do .env
       RABBITMQ_HOST: rabbitmq
     depends_on:
-      - rabbitmq
-
+      rabbitmq:
+        condition: service_healthy
+      gdash-api:
+        condition: service_healthy
+      rabbitmq-worker:
+        condition: service_started
 volumes:
-  mongo-data:
-    driver: local
   rabbitmq-data:
     driver: local
-
 networks:
   gdash-network:
     driver: bridge
