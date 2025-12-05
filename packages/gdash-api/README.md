@@ -272,6 +272,10 @@ src/
 ### Documentação
 - **Swagger/OpenAPI** - Documentação interativa da API
 
+### Inteligência Artificial
+- **Google Gemini AI** - Geração de insights climáticos inteligentes via @google/generative-ai
+- **Modelo:** gemini-2.5-flash-lite (rápido e eficiente)
+
 ### Utilidades
 - **Axios** - Cliente HTTP para APIs externas
 - **XLSX** - Exportação de dados em Excel
@@ -342,11 +346,15 @@ nano ../../.env
 Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
 ```bash
-# MongoDB Configuration
-MONGO_ROOT_USER=admin
-MONGO_ROOT_PASSWORD=your_secure_password
-MONGO_DATABASE=gdash_weather
-MONGODB_URI=mongodb://admin:your_secure_password@localhost:27017/gdash_weather?authSource=admin
+# MongoDB Configuration (Atlas ou Local)
+# Para MongoDB Atlas (recomendado)
+MONGODB_URI=mongodb+srv://usuario:senha@cluster.mongodb.net/gdash_weather?retryWrites=true&w=majority
+
+# Para MongoDB Local (alternativa)
+# MONGO_ROOT_USER=admin
+# MONGO_ROOT_PASSWORD=your_secure_password
+# MONGO_DATABASE=gdash_weather
+# MONGODB_URI=mongodb://admin:your_secure_password@localhost:27017/gdash_weather?authSource=admin
 
 # RabbitMQ Configuration
 RABBITMQ_USER=guest
@@ -359,11 +367,29 @@ ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=secure_admin_password
 FRONTEND_URL=http://localhost:5173
 
+# Gemini AI Configuration (Obrigatório para insights)
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash-lite
+
 # Application
 PORT=3000
 NODE_ENV=development
 LOG_LEVEL=debug
 ```
+
+> **⚠️ Importante:** 
+> 
+> **Para MongoDB Atlas:**
+> 1. Crie uma conta gratuita em [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+> 2. Crie um cluster e obtenha o connection string
+> 3. Adicione `/gdash_weather` após o hostname no connection string
+> 4. Configure no `.env` como `MONGODB_URI`
+>
+> **Para Google Gemini AI:**
+> 1. Acesse [Google AI Studio](https://aistudio.google.com/app/apikey)
+> 2. Crie uma nova chave de API (gratuita - 1500 requests/dia)
+> 3. Adicione ao arquivo `.env` como `GEMINI_API_KEY`
+> 4. Use o modelo `gemini-2.5-flash-lite` para melhor performance
 
 ---
 
@@ -374,7 +400,10 @@ LOG_LEVEL=debug
 #### 1. Inicie a infraestrutura
 
 ```bash
-# Na raiz do projeto - inicie MongoDB e RabbitMQ
+# Na raiz do projeto - inicie apenas RabbitMQ (MongoDB Atlas é usado via cloud)
+docker-compose up rabbitmq -d
+
+# OU se preferir MongoDB local
 docker-compose up mongodb rabbitmq -d
 ```
 
@@ -528,24 +557,55 @@ Content-Type: application/json
 }
 ```
 
-**Obter insights com IA**
+**Obter insights com IA (Google Gemini)**
 
 ```http
-GET /api/weather/insights/Recife?days=7
+GET /api/weather/insights
 Authorization: Bearer {token}
 
 Response:
 {
-  "location": "Recife, Brazil",
-  "period": "7 days",
-  "insights": {
-    "averageTemperature": 27.8,
-    "maxTemperature": 32.1,
-    "minTemperature": 23.5,
-    "dominantCondition": "Parcialmente nublado",
-    "patterns": "Temperatura estável com pequenas variações...",
-    "recommendations": "Período favorável para atividades ao ar livre..."
-  }
+  "averageTemperature": 27.8,
+  "maxTemperature": {
+    "value": 32.1,
+    "city": "Recife, Brazil",
+    "date": "2025-12-05T10:00:00.000Z"
+  },
+  "minTemperature": {
+    "value": 23.5,
+    "city": "Recife, Brazil",
+    "date": "2025-12-05T08:00:00.000Z"
+  },
+  "averageHumidity": 72,
+  "maxWindSpeed": {
+    "value": 15.7,
+    "city": "Recife, Brazil",
+    "date": "2025-12-05T12:00:00.000Z"
+  },
+  "mostFrequentCondition": "agradável",
+  "ai": {
+    "textualSummary": "Clima agradável com temperatura média de 27.8°C e umidade de 72%...",
+    "keyFindings": [
+      "Temperatura estável entre 23.5°C e 32.1°C",
+      "Umidade confortável para atividades ao ar livre"
+    ],
+    "recommendations": [
+      "Ideal para passeios ao ar livre",
+      "Mantenha-se hidratado"
+    ],
+    "forecast": "Tendência de manutenção das condições atuais",
+    "healthImpact": "Condições favoráveis para a saúde",
+    "activities": {
+      "recommended": ["Caminhadas", "Esportes ao ar livre"],
+      "avoid": ["Atividades em horários de pico solar"]
+    },
+    "condition": "agradável",
+    "alerts": [],
+    "patterns": ["Estabilidade climática"],
+    "source": "gemini",
+    "model": "gemini-2.5-flash-lite"
+  },
+  "generatedAt": "2025-12-05T14:30:00.000Z"
 }
 ```
 
@@ -792,9 +852,26 @@ docker-compose logs -f gdash-api | grep ERROR
 **Erro: Cannot connect to MongoDB**
 
 ```bash
-# Verifique se MongoDB está rodando
-docker-compose ps mongodb
+# Para MongoDB Atlas - verifique suas credenciais
 echo $MONGODB_URI
+
+# Certifique-se que o formato está correto:
+# mongodb+srv://usuario:senha@cluster.mongodb.net/gdash_weather?retryWrites=true&w=majority
+
+# Verifique se o IP está whitelisted no MongoDB Atlas (Network Access)
+
+# Para MongoDB local - verifique se está rodando
+docker-compose ps mongodb
+```
+
+**Erro: Gemini API Key not configured**
+
+```bash
+# Configure no .env
+GEMINI_API_KEY=sua_chave_aqui
+GEMINI_MODEL=gemini-2.5-flash-lite
+
+# Obtenha uma chave gratuita em: https://aistudio.google.com/app/apikey
 ```
 
 **Erro: JWT Secret not configured**
