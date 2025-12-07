@@ -105,7 +105,6 @@ stateDiagram-v2
     Crie um arquivo `.env` na raiz do pacote `packages/gdash-frontend` (ou use o da raiz do monorepo se configurado):
     ```env
     VITE_API_URL=http://localhost:3000/api
-    VITE_STARWARS_API_URL=https://swapi.dev/api
     ```
 
 4.  **Inicie o servidor de desenvolvimento:**

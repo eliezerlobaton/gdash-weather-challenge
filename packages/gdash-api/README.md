@@ -618,7 +618,26 @@ Authorization: Bearer {token}
 Response: (arquivo CSV ou XLSX)
 ```
 
-#### 👥 Usuários
+#### 🌌 Star Wars (Proxy)
+622: 
+623: **Listar entidades por categoria**
+624: 
+625: ```http
+626: GET /api/starwars/:category?page=1&limit=10
+627: Authorization: Bearer {token}
+628: 
+629: Parâmetros:
+630: - category: people, planets, vehicles, species, locations, organizations
+631: ```
+632: 
+633: **Obter detalhes de uma entidade**
+634: 
+635: ```http
+636: GET /api/starwars/:category/:id
+637: Authorization: Bearer {token}
+638: ```
+639: 
+640: #### 👥 Usuários
 
 **Listar usuários**
 

@@ -112,7 +112,7 @@ sequenceDiagram
   - Filtros avançados por data e paginação.
   - Modo Escuro/Claro (Dark Mode).
   - Sistema de notificações (`sonner`).
-  - Integração opcional com API de Star Wars.
+  - Integração com API de Star Wars (via Proxy no Backend).
 
 ---
 
