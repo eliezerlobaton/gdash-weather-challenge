@@ -7,8 +7,6 @@ services:
     staticPublishPath: packages/gdash-frontend/dist
     envVars:
       - fromGroup: gdash-challenge
-      - key: VITE_STARWARS_API_URL
-        value: https://starwars-databank-server.vercel.app/api/v1
     routes:
       - type: rewrite
         source: /*
@@ -23,6 +21,8 @@ services:
     startCommand: cd packages/gdash-api && pnpm run start:prod
     envVars:
       - fromGroup: gdash-challenge
+      - key: STARWARS_API_URL
+        value: https://starwars-databank-server.vercel.app/api/v1
       - key: NODE_ENV
         value: production
       - key: PORT

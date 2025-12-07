@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { WeatherModule } from './weather/weather.module';
 import { MongodbModule } from './config/mongodb/mongodb.module';
+import { StarwarsModule } from './starwars/starwars.module';
 import databaseConfig from './config/database.config';
 @Module({
   imports: [
@@ -16,8 +17,9 @@ import databaseConfig from './config/database.config';
     UsersModule,
     AuthModule,
     MongodbModule,
+    StarwarsModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }
