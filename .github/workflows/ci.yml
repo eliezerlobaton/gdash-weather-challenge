@@ -27,12 +27,10 @@ jobs:
         with:
           version: 8
 
-      # Frontend
-      - name: Install Frontend Dependencies
-        run: |
-          cd packages/gdash-frontend
-          pnpm install
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
 
+      # Frontend
       - name: Lint Frontend
         run: |
           cd packages/gdash-frontend
@@ -47,11 +45,6 @@ jobs:
           VITE_STARWARS_API_URL: https://swapi.dev/api
 
       # Backend (API)
-      - name: Install API Dependencies
-        run: |
-          cd packages/gdash-api
-          pnpm install
-
       - name: Lint API
         run: |
           cd packages/gdash-api
