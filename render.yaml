@@ -1,5 +1,5 @@
 services:
-  # 1. Frontend (Static Site)
+  # 1. Frontend (Static Site) - No plan needed (Always Free)
   - type: web
     name: gdash-frontend
     runtime: static
@@ -15,6 +15,7 @@ services:
   - type: web
     name: gdash-api
     runtime: node
+    plan: free
     buildCommand: cd packages/gdash-api && pnpm install && pnpm run build
     startCommand: cd packages/gdash-api && pnpm run start:prod
     envVars:
@@ -33,6 +34,7 @@ services:
   - type: web
     name: rabbitmq-worker
     runtime: go
+    plan: free
     buildCommand: cd packages/rabbitmq-worker && go build -o worker_bin main.go
     startCommand: cd packages/rabbitmq-worker && ./worker_bin
     envVars:
@@ -47,6 +49,7 @@ services:
   - type: web
     name: weather-data-collector
     runtime: python
+    plan: free
     buildCommand: cd packages/weather-data-collector && pip install -r requirements.txt
     startCommand: cd packages/weather-data-collector && python main.py
     envVars:
