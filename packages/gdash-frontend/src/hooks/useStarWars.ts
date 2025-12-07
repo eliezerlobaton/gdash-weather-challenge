@@ -72,7 +72,7 @@ export function useStarWars(): UseStarWarsReturn {
         setItems(results)
         setTotalPages(1)
       }
-    } catch (err) {
+    } catch {
       setError('Falha na busca')
       setItems([])
     } finally {
