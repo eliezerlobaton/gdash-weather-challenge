@@ -127,6 +127,14 @@ O serviço é configurado através de variáveis de ambiente, seguindo as melhor
 | `COLLECTION_INTERVAL`| Intervalo em segundos entre cada ciclo de coleta. | `300` (5 minutos) |
 | `WEATHER_API_URL` | URL da API de clima. | `https://api.open-meteo.com/v1/forecast` |
 
+## Instalação
+
+1.  **Clone o repositório:**
+    ```bash
+    git clone https://github.com/eliezerlobaton/gdash-weather-challenge.git
+    cd gdash-weather-challenge/packages/weather-data-collector
+    ```
+
 ## Como Executar
 
 Este serviço foi projetado para ser executado como um contêiner Docker, preferencialmente orquestrado pelo `docker-compose.yml` na raiz do projeto.

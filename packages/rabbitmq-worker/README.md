@@ -160,7 +160,12 @@ docker-compose up -d rabbitmq-worker
 
 ### Build e Execução Local
 
-1.  **Navegue até o diretório:**
+1.  **Clone o repositório:**
+    ```bash
+    git clone https://github.com/eliezerlobaton/gdash-weather-challenge.git
+    ```
+
+2.  **Navegue até o diretório:**
     ```bash
     cd packages/rabbitmq-worker
     ```

@@ -317,7 +317,7 @@ docker-compose --version
 ### 1. Clone o repositório
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/eliezerlobaton/gdash-weather-challenge.git
 cd gdash-weather-challenge/packages/gdash-api
 ```
 
