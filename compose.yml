@@ -20,7 +20,7 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -48,7 +48,7 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/docs"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/docs" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -82,6 +82,20 @@ services:
         condition: service_healthy
       rabbitmq-worker:
         condition: service_started
+  weather-dashboard:
+    !!merge <<: *common-properties
+    build:
+      context: ./packages/gdash-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_STARWARS_API_URL: ${VITE_STARWARS_API_URL}
+    container_name: gdash-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      gdash-api:
+        condition: service_healthy
 volumes:
   rabbitmq-data:
     driver: local
