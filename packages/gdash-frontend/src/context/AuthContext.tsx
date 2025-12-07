@@ -6,9 +6,9 @@ import { toast } from 'sonner'
 import { AuthContext } from './auth-context-refs'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'))
   const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('user')
+    const storedUser = localStorage.getItem('auth_user')
     return storedUser ? JSON.parse(storedUser) : null
   })
 
