@@ -1,0 +1,12 @@
+{
+  "name": "gdash-weather-challenge-root",
+  "private": true,
+  "scripts": {
+    "lint": "pnpm -r run lint",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}
