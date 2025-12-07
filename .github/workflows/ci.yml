@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      # Frontend
+      - name: Install Frontend Dependencies
+        run: |
+          cd packages/gdash-frontend
+          pnpm install
+
+      - name: Lint Frontend
+        run: |
+          cd packages/gdash-frontend
+          pnpm run lint
+
+      - name: Build Frontend
+        run: |
+          cd packages/gdash-frontend
+          pnpm run build
+        env:
+          VITE_API_URL: http://localhost:3000/api
+          VITE_STARWARS_API_URL: https://swapi.dev/api
+
+      # Backend (API)
+      - name: Install API Dependencies
+        run: |
+          cd packages/gdash-api
+          pnpm install
+
+      - name: Lint API
+        run: |
+          cd packages/gdash-api
+          pnpm run lint
+
+      - name: Build API
+        run: |
+          cd packages/gdash-api
+          pnpm run build
+
+      # Go Worker
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Build Go Worker
+        run: |
+          cd packages/rabbitmq-worker
+          go mod download
+          go build -v ./...
+
+      # Python Collector
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Python Dependencies
+        run: |
+          cd packages/weather-data-collector
+          pip install -r requirements.txt
+
+      - name: Lint Python (flake8)
+        run: |
+          cd packages/weather-data-collector
+          pip install flake8
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
