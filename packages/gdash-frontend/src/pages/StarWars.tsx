@@ -16,7 +16,7 @@ import { CharacterCard } from '@/components/starwars/CharacterCard'
 import { CharacterDetailsModal } from '@/components/starwars/CharacterDetailsModal'
 import type { StarWarsCategory, StarWarsEntity } from '@/types/starwars.types'
 
-const CATEGORIES: { id: StarWarsCategory; label: string; icon: any }[] = [
+const CATEGORIES: { id: StarWarsCategory; label: string; icon: React.ElementType }[] = [
   { id: 'characters', label: 'Personagens', icon: User },
   { id: 'creatures', label: 'Criaturas', icon: PawPrint },
   { id: 'droids', label: 'Droids', icon: Bot },
@@ -34,7 +34,7 @@ export default function StarWarsPage() {
   // Initial load
   useEffect(() => {
     loadPage(1)
-  }, []) // Run once on mount
+  }, [loadPage]) // Run once on mount
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()

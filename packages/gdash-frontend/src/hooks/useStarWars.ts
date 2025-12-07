@@ -26,13 +26,29 @@ export function useStarWars(): UseStarWarsReturn {
   const [limit, setLimitState] = useState(10)
   const [category, setCategoryState] = useState<StarWarsCategory>('characters')
 
+  const loadPage = useCallback(async (pageNum: number, cat: StarWarsCategory = category, currentLimit: number = limit) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const data = await starWarsApi.getEntities(cat, pageNum, currentLimit)
+      setItems(data.data)
+      setTotalPages(Math.ceil(data.info.total / data.info.limit))
+      setPage(pageNum)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar itens')
+    } finally {
+      setLoading(false)
+    }
+  }, [category, limit])
+
   const setCategory = useCallback((newCategory: StarWarsCategory) => {
     setCategoryState(newCategory)
     setPage(1)
     setItems([])
     // Trigger load for new category
     loadPage(1, newCategory, limit)
-  }, [limit])
+  }, [limit, loadPage])
 
   const search = useCallback(async (query: string) => {
     if (!query.trim()) {
@@ -72,23 +88,10 @@ export function useStarWars(): UseStarWarsReturn {
     } finally {
       setLoading(false)
     }
-  }, [category, limit])
+  }, [category, limit, loadPage])
 
-  const loadPage = useCallback(async (pageNum: number, cat: StarWarsCategory = category, currentLimit: number = limit) => {
-    try {
-      setLoading(true)
-      setError(null)
+  // Duplicate loadPage removed
 
-      const data = await starWarsApi.getEntities(cat, pageNum, currentLimit)
-      setItems(data.data)
-      setTotalPages(Math.ceil(data.info.total / data.info.limit))
-      setPage(pageNum)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar itens')
-    } finally {
-      setLoading(false)
-    }
-  }, [category, limit])
 
   const setLimit = useCallback((newLimit: number) => {
     setLimitState(newLimit)

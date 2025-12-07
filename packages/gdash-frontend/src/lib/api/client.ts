@@ -51,13 +51,12 @@ apiClient.interceptors.response.use(
 
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
-    const message = error.response?.data?.message || error.message
-    return message
-  }
-
-  if (error instanceof Error) {
+    const apiError = error.response?.data as { message?: string | string[] }
+    if (apiError?.message) {
+      return Array.isArray(apiError.message) ? apiError.message[0] : apiError.message
+    }
     return error.message
   }
-
-  return 'Erro desconhecido'
+  if (error instanceof Error) return error.message
+  return 'An unexpected error occurred'
 }

@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 export class WeatherService {
   constructor(
     @InjectModel('WeatherLog') private weatherModel: Model<WeatherLog>,
-  ) { }
+  ) {}
 
   async createLog(data: CreateWeatherLogDto): Promise<WeatherLog> {
     const log = new this.weatherModel({
@@ -38,7 +38,7 @@ export class WeatherService {
     startDate?: string,
     endDate?: string,
   ): Promise<WeatherLog[]> {
-    const query: any = {};
+    const query: { timestamp?: { $gte?: string; $lte?: string } } = {};
 
     if (startDate || endDate) {
       query.timestamp = {};
@@ -61,7 +61,7 @@ export class WeatherService {
   }
 
   async getTotalLogs(startDate?: string, endDate?: string): Promise<number> {
-    const query: any = {};
+    const query: { timestamp?: { $gte?: string; $lte?: string } } = {};
 
     if (startDate || endDate) {
       query.timestamp = {};

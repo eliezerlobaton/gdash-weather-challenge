@@ -1,7 +1,6 @@
-import axios from 'axios'
-import { apiClient } from './client'
-
-const API_URL = import.meta.env.VITE_API_URL
+import { isAxiosError } from 'axios'
+import { handleApiError, apiClient } from './client'
+import type { LoginResponse, AuthResponse } from '@/types/api.types'
 
 export interface User {
   id: string
@@ -9,47 +8,29 @@ export interface User {
   email: string
 }
 
-export interface LoginResponse {
-  access_token: string
-  user: User
-}
-
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
     try {
-      const response = await axios.post<any>(`${API_URL}/auth/login`, {
+      const response = await apiClient.post<LoginResponse>('/auth/login', {
         email,
         password,
       })
-
-      const data = response.data.data || response.data
-      return data
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || 'Falha no login')
-      }
-      throw new Error('Erro inesperado ao tentar fazer login')
+      return response.data
+    } catch (error: unknown) {
+      throw new Error(handleApiError(error))
     }
   },
 
-  register: async (name: string, email: string, password: string): Promise<User> => {
+  register: async (name: string, email: string, password: string): Promise<AuthResponse> => {
     try {
-      const response = await axios.post<any>(`${API_URL}/users`, {
+      const response = await apiClient.post<AuthResponse>('/users', {
         name,
         email,
         password,
       })
-      const data = response.data.data || response.data
-      return data
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message = error.response?.data?.message
-        if (Array.isArray(message)) {
-          throw new Error(message.join(', '))
-        }
-        throw new Error(message || 'Falha no cadastro')
-      }
-      throw new Error('Erro inesperado ao tentar cadastrar')
+      return response.data
+    } catch (error: unknown) {
+      throw new Error(handleApiError(error))
     }
   },
 
@@ -57,7 +38,7 @@ export const authApi = {
     try {
       await apiClient.delete(`/users/${userId}`)
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (isAxiosError(error)) {
         throw new Error(error.response?.data?.message || 'Falha ao deletar conta')
       }
       throw new Error('Erro inesperado ao tentar deletar conta')

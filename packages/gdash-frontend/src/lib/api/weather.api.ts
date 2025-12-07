@@ -25,9 +25,11 @@ export const weatherApi = {
       // Handle NestJS TransformInterceptor wrapping
       // The response might be { data: { data: [], meta: {} }, statusCode: ... }
       // Or just { data: [], meta: {} } if interceptor is disabled
-      const apiResponse = (rawData as any).data?.data ? (rawData as any).data : rawData
+      const apiResponse = (rawData as { data?: { data?: unknown } }).data?.data ? (rawData as { data: unknown }).data : rawData
 
-      const logs = (Array.isArray(apiResponse.data) ? apiResponse.data : []).map((log: RawWeatherLog) => {
+      // Type guard or assertion
+      const safeApiResponse = apiResponse as { data: RawWeatherLog[], meta?: { total: number, page: number, limit: number, totalPages: number } }
+      const logs = (Array.isArray(safeApiResponse.data) ? safeApiResponse.data : []).map((log: RawWeatherLog) => {
         try {
           let city = 'Unknown'
           let country = ''
@@ -62,10 +64,10 @@ export const weatherApi = {
 
       return {
         data: logs,
-        total: apiResponse.meta?.total || logs.length,
-        page: apiResponse.meta?.page || params.page || 1,
-        limit: apiResponse.meta?.limit || params.limit || 10,
-        totalPages: apiResponse.meta?.totalPages || 1
+        total: safeApiResponse.meta?.total || logs.length,
+        page: safeApiResponse.meta?.page || params.page || 1,
+        limit: safeApiResponse.meta?.limit || params.limit || 10,
+        totalPages: safeApiResponse.meta?.totalPages || 1
       }
     } catch (error) {
       console.error('getLogs Error:', error)
@@ -113,7 +115,7 @@ export const weatherApi = {
         responseType: 'blob',
       })
       return response.data
-    } catch (error) {
+    } catch (error: unknown) { // Use unknown for caught errors
       throw new Error(handleApiError(error))
     }
   },
@@ -126,7 +128,7 @@ export const weatherApi = {
         responseType: 'blob',
       })
       return response.data
-    } catch (error) {
+    } catch (error: unknown) {
       throw new Error(handleApiError(error))
     }
   },

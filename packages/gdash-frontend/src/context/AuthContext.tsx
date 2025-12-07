@@ -1,41 +1,29 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { authApi, type User, type LoginResponse } from '@/lib/api/auth.api'
-
-interface AuthContextType {
-  user: User | null
-  token: string | null
-  isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<User>
-  deleteAccount: () => Promise<void>
-  logout: () => void
-  isLoading: boolean
-  loading: boolean
-  error: string | null
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+import { authApi } from '@/lib/api/auth.api'
+import { type User, type LoginResponse } from '@/types/api.types'
+import { toast } from 'sonner'
+import { AuthContext } from './auth-context-refs'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-  const [isInitializing, setIsInitializing] = useState(true)
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem('user')
+    return storedUser ? JSON.parse(storedUser) : null
+  })
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token')
-    const storedUser = localStorage.getItem('auth_user')
-
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
-    }
-    setIsInitializing(false)
+    // Optional: Validate token on mount if needed, but for now just syncing is enough.
+    // Since we initialize from localStorage, we don't need to set it again here.
   }, [])
 
   const loginMutation = useMutation({
-    mutationFn: async ({ email, password }: any) => {
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
       return await authApi.login(email, password)
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Erro ao realizar login'
+      toast.error(message)
     },
     onSuccess: (data: LoginResponse) => {
       setToken(data.access_token)
@@ -71,8 +59,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         },
         logout,
-        isLoading: loginMutation.isPending || isInitializing,
-        loading: loginMutation.isPending || isInitializing,
+        isLoading: loginMutation.isPending,
+        loading: loginMutation.isPending,
         error: loginMutation.error ? (loginMutation.error as Error).message : null,
       }}
     >
@@ -81,10 +69,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+// useAuth moved to src/hooks/useAuth.ts

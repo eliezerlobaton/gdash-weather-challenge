@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { LogOut, Cloud, Star, LayoutDashboard, Menu, X, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -26,7 +26,7 @@ export function Header() {
                     try {
                         await deleteAccount()
                         toast.success('Conta excluída com sucesso.')
-                    } catch (error) {
+                    } catch {
                         toast.error('Erro ao excluir conta.')
                     }
                 },

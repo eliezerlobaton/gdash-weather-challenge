@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,7 +26,7 @@ export default function LoginPage() {
       await login(email, password)
       toast.success('Login realizado com sucesso!')
       // Navigation handled by useEffect
-    } catch (err) {
+    } catch {
       toast.error('Erro ao realizar login. Verifique suas credenciais.')
       // Error is handled by context/query
     }

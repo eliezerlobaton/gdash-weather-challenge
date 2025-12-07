@@ -27,7 +27,7 @@ export class WeatherController {
   constructor(
     private weatherService: WeatherService,
     private weatherInsightsService: WeatherInsightsService,
-  ) { }
+  ) {}
 
   @Post('logs')
   @ApiOperation({

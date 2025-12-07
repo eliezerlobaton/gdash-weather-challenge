@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { TrendingUp, TrendingDown, Droplet, Wind, Sparkles, Lightbulb, RefreshCw } from 'lucide-react'
 import { weatherApi } from '@/lib/api/weather.api'
 import type { WeatherFiltersParams, WeatherInsights } from '@/types/weather.types'
@@ -14,17 +14,13 @@ export function WeatherStats({ filters }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Filter out pagination params to avoid unnecessary re-fetches
-  const insightFilters = {
+  const insightFilters = useMemo(() => ({
     ...filters,
     page: undefined,
     limit: undefined
-  }
+  }), [filters])
 
-  useEffect(() => {
-    loadInsights()
-  }, [JSON.stringify(insightFilters)])
-
-  const loadInsights = async () => {
+  const loadInsights = useCallback(async () => {
     try {
       setLoading(true)
       const data = await weatherApi.getInsights(insightFilters)
@@ -34,7 +30,11 @@ export function WeatherStats({ filters }: Props) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [insightFilters])
+
+  useEffect(() => {
+    loadInsights()
+  }, [loadInsights])
 
   const handleRefresh = async () => {
     try {

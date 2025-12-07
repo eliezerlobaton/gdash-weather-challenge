@@ -23,7 +23,7 @@ import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) { }
+  constructor(private usersService: UsersService) {}
 
   @Get()
   @UseGuards(JwtAuthGuard)

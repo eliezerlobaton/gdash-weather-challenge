@@ -1,5 +1,5 @@
 import { Outlet, Navigate } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { Spinner } from '@/components/ui/spinner'
 import { Header } from '@/components/layout/Header'
 

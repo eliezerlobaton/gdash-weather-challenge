@@ -9,11 +9,15 @@ export interface LoginCredentials {
   password: string
 }
 
+export interface User {
+  id: string
+  email: string
+  name: string
+}
+
 export interface LoginResponse {
   access_token: string
-  user: {
-    id: string
-    email: string
-    name: string
-  }
+  user: User
 }
+
+export type AuthResponse = LoginResponse
