@@ -83,7 +83,22 @@ def create_collector_with_dependencies() -> WeatherDataCollector:
     return WeatherDataCollector(config, weather_collector, processor, publisher)
 
 
+import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+def start_dummy_server():
+    port = int(os.environ.get("PORT", 8080))
+    server_address = ("", port)
+    httpd = HTTPServer(server_address, BaseHTTPRequestHandler)
+    logger.info(f"Iniciando servidor HTTP dummy na porta {port}")
+    httpd.serve_forever()
+
 def main():
+    # Start dummy server in a separate thread
+    server_thread = threading.Thread(target=start_dummy_server, daemon=True)
+    server_thread.start()
+
     collector = create_collector_with_dependencies()
     collector.run()
 

@@ -21,12 +21,16 @@ type Config struct {
 var _ interfaces.ConfigProvider = (*Config)(nil)
 
 func Load() *Config {
-	host := getEnv("RABBITMQ_HOST", "localhost")
-	port := getEnv("RABBITMQ_PORT", "5672")
-	user := getEnv("RABBITMQ_USER", "")
-	pass := getEnv("RABBITMQ_PASS", "")
-
-	rabbitmqURL := fmt.Sprintf("amqp://%s:%s@%s:%s/", user, pass, host, port)
+	var rabbitmqURL string
+	if url := os.Getenv("RABBITMQ_URL"); url != "" {
+		rabbitmqURL = url
+	} else {
+		host := getEnv("RABBITMQ_HOST", "localhost")
+		port := getEnv("RABBITMQ_PORT", "5672")
+		user := getEnv("RABBITMQ_USER", "")
+		pass := getEnv("RABBITMQ_PASS", "")
+		rabbitmqURL = fmt.Sprintf("amqp://%s:%s@%s:%s/", user, pass, host, port)
+	}
 
 	maxRetries, _ := strconv.Atoi(getEnv("MAX_RETRIES", "3"))
 	retryDelaySeconds, _ := strconv.Atoi(getEnv("RETRY_DELAY_SECONDS", "5"))

@@ -11,9 +11,11 @@ class Config:
     RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
     QUEUE_NAME = os.getenv("RABBITMQ_QUEUE", "weather_data")
 
-    RABBITMQ_URL = (
-        f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASS}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/"
-    )
+    RABBITMQ_URL = os.getenv("RABBITMQ_URL")
+    if not RABBITMQ_URL:
+        RABBITMQ_URL = (
+            f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASS}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/"
+        )
 
     CITY = os.getenv("LOCATION_NAME", "Recife, Brazil")
     LATITUDE = float(os.getenv("LATITUDE", "-8.0542"))

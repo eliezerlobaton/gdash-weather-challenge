@@ -1,0 +1,59 @@
+services:
+  # 1. Frontend (Static Site)
+  - type: web
+    name: gdash-frontend
+    env: static
+    buildCommand: cd packages/gdash-frontend && pnpm install && pnpm run build
+    staticPublishPath: packages/gdash-frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: gdash-api
+          property: url
+      - key: VITE_STARWARS_API_URL
+        value: https://swapi.dev/api
+
+  # 2. API (NestJS)
+  - type: web
+    name: gdash-api
+    env: node
+    buildCommand: cd packages/gdash-api && pnpm install && pnpm run build
+    startCommand: cd packages/gdash-api && pnpm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false # User must provide this in Render Dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false # User must provide this in Render Dashboard
+
+  # 3. RabbitMQ Worker (Go) - Deployed as Web Service for Free Tier
+  - type: web
+    name: rabbitmq-worker
+    env: go
+    buildCommand: cd packages/rabbitmq-worker && go build -o worker_bin main.go
+    startCommand: cd packages/rabbitmq-worker && ./worker_bin
+    envVars:
+      - key: RABBITMQ_URL
+        sync: false # User must provide this in Render Dashboard
+      - key: MONGODB_URI
+        sync: false # User must provide this in Render Dashboard
+      - key: PORT
+        value: 8080
+
+  # 4. Weather Data Collector (Python) - Deployed as Web Service for Free Tier
+  - type: web
+    name: weather-data-collector
+    env: python
+    buildCommand: cd packages/weather-data-collector && pip install -r requirements.txt
+    startCommand: cd packages/weather-data-collector && python main.py
+    envVars:
+      - key: RABBITMQ_URL
+        sync: false # User must provide this in Render Dashboard
+      - key: PORT
+        value: 8080

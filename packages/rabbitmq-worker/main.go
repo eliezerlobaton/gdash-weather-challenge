@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,6 +16,22 @@ import (
 
 func main() {
 	log.Println("Iniciando RabbitMQ Worker...")
+
+	// Dummy HTTP server for Render
+	go func() {
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+		log.Printf("Iniciando servidor HTTP dummy na porta %s", port)
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Worker is running"))
+		})
+		if err := http.ListenAndServe(":"+port, nil); err != nil {
+			log.Printf("Erro no servidor HTTP dummy: %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
