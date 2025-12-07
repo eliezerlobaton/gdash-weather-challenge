@@ -6,25 +6,6 @@ x-common-properties: &common-properties
   env_file:
     - .env
 services:
-  rabbitmq:
-    !!merge <<: *common-properties
-    image: rabbitmq:3.13-management-alpine
-    container_name: gdash-rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672" # Management UI
-    # O .env injetará RABBITMQ_USER e RABBITMQ_PASS, que o RabbitMQ usa para o usuário padrão.
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 40s
   # --- SERVIÇOS DA APLICAÇÃO ---
   gdash-api:
     !!merge <<: *common-properties
@@ -36,7 +17,7 @@ services:
       - "3000:3000"
     environment:
       MONGODB_URI: ${MONGODB_URI}
-      RABBITMQ_URL: "amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672"
+      RABBITMQ_URL: ${RABBITMQ_URL}
       PORT: 3000
       FRONTEND_URL: ${FRONTEND_URL}
       JWT_SECRET: ${JWT_SECRET}
@@ -44,9 +25,6 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL}
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/docs" ]
       interval: 10s
@@ -60,11 +38,9 @@ services:
       dockerfile: Dockerfile
     container_name: gdash-rabbitmq-worker
     environment:
-      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_URL: ${RABBITMQ_URL}
       API_URL: http://gdash-api:3000
     depends_on:
-      rabbitmq:
-        condition: service_healthy
       gdash-api:
         condition: service_healthy
   weather-data-collector:
@@ -74,10 +50,8 @@ services:
       dockerfile: Dockerfile
     container_name: gdash-weather-collector
     environment:
-      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_URL: ${RABBITMQ_URL}
     depends_on:
-      rabbitmq:
-        condition: service_healthy
       gdash-api:
         condition: service_healthy
       rabbitmq-worker:
@@ -96,9 +70,6 @@ services:
     depends_on:
       gdash-api:
         condition: service_healthy
-volumes:
-  rabbitmq-data:
-    driver: local
 networks:
   gdash-network:
     driver: bridge

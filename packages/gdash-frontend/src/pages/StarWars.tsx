@@ -31,10 +31,9 @@ export default function StarWarsPage() {
   const [selectedCharacter, setSelectedCharacter] = useState<StarWarsEntity | null>(null)
   const { items, loading, error, search, loadPage, page, totalPages, category, setCategory, limit, setLimit } = useStarWars()
 
-  // Initial load
   useEffect(() => {
     loadPage(1)
-  }, [loadPage]) // Run once on mount
+  }, [loadPage])
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()

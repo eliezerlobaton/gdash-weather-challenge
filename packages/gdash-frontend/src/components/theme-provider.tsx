@@ -49,5 +49,3 @@ export function ThemeProvider({
     </ThemeProviderContext.Provider>
   )
 }
-
-// useTheme is now imported from @/hooks/use-theme

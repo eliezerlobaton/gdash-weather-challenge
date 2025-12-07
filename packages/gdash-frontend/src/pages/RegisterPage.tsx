@@ -24,8 +24,7 @@ export default function RegisterPage() {
 
     try {
       await authApi.register(name, email, password)
-      toast.success('Conta criada com sucesso! Faça login para continuar.')
-      // Redirect to login on success
+      toast.success('Cadastro realizado com sucesso! Faça login.')
       navigate('/login')
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Ocorreu um erro ao tentar criar a conta'

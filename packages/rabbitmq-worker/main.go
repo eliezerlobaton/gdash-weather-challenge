@@ -17,7 +17,6 @@ import (
 func main() {
 	log.Println("Iniciando RabbitMQ Worker...")
 
-	// Dummy HTTP server for Render
 	go func() {
 		port := os.Getenv("PORT")
 		if port == "" {

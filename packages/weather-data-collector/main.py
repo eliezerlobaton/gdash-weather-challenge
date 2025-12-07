@@ -95,7 +95,6 @@ def start_dummy_server():
     httpd.serve_forever()
 
 def main():
-    # Start dummy server in a separate thread
     server_thread = threading.Thread(target=start_dummy_server, daemon=True)
     server_thread.start()
 

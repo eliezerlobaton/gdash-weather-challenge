@@ -1,13 +1,10 @@
-import { apiClient, handleApiError } from './client'
+import { apiClient } from './client'
 import type { StarWarsEntity, StarWarsSearchResponse, StarWarsCategory } from '@/types/starwars.types'
 
 export const starWarsApi = {
 
   async searchEntities(category: StarWarsCategory, query: string): Promise<StarWarsEntity[]> {
     try {
-      // The backend proxy returns the external API response wrapped in { data: ... }
-      // External API returns { data: [...] }
-      // So we access response.data.data (external response) .data (items)
       const response = await apiClient.get<{ data: StarWarsSearchResponse }>(`/starwars/${category}`, {
         params: { limit: 1000 },
       })

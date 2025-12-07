@@ -31,7 +31,7 @@ export function useWeatherFilters(): UseWeatherFiltersReturn {
       setFilters((prev) => ({
         ...prev,
         [key]: value,
-        page: key === 'page' ? (value as number) : 1, // Reset page ao mudar outros filtros
+        page: key === 'page' ? (value as number) : 1,
       }))
     },
     []

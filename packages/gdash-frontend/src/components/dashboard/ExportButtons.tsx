@@ -18,7 +18,6 @@ export function ExportButtons({ filters }: Props) {
         ? await weatherApi.exportCSV(filters)
         : await weatherApi.exportXLSX(filters)
 
-      // Create download link
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url

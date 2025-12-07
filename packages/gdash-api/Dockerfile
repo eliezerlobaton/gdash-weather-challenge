@@ -1,16 +1,16 @@
 # Dockerfile para Demo/Desenvolvimento
-FROM node:24-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
 # Instala pnpm via npm (mais confiável)
-RUN npm install -g pnpm@10.22.0
+RUN npm install -g pnpm@10.24.0
 
 # Copia arquivos de dependências
 COPY package.json pnpm-lock.yaml ./
 
 # Instala todas as dependências (incluindo dev)
-RUN pnpm install --frozen-lockfile
+RUN pnpm install 
 
 # Copia código fonte
 COPY . .

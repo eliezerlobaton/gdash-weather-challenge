@@ -68,12 +68,7 @@ export function WeatherTable({ data, loading, page, totalPages, onPageChange }: 
                 <TableRow
                   key={log._id}
                   className="hover:bg-muted cursor-pointer md:cursor-default"
-                  onClick={() => {
-                    // Only open on mobile/tablet where columns are hidden
-                    if (window.innerWidth < 768) {
-                      setSelectedLog(log)
-                    }
-                  }}
+                  onClick={() => setSelectedLog(log)}
                 >
                   <TableCell className="whitespace-nowrap">
                     <div className="flex items-center gap-3">

@@ -25,10 +25,8 @@ export default function LoginPage() {
     try {
       await login(email, password)
       toast.success('Login realizado com sucesso!')
-      // Navigation handled by useEffect
     } catch {
       toast.error('Erro ao realizar login. Verifique suas credenciais.')
-      // Error is handled by context/query
     }
   }
 

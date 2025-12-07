@@ -13,8 +13,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    // Optional: Validate token on mount if needed, but for now just syncing is enough.
-    // Since we initialize from localStorage, we don't need to set it again here.
   }, [])
 
   const loginMutation = useMutation({
@@ -68,5 +66,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   )
 }
-
-// useAuth moved to src/hooks/useAuth.ts

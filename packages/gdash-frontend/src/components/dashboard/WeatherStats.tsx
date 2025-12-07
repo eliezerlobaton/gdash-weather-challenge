@@ -13,7 +13,6 @@ export function WeatherStats({ filters }: Props) {
   const [loading, setLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  // Filter out pagination params to avoid unnecessary re-fetches
   const insightFilters = useMemo(() => ({
     ...filters,
     page: undefined,

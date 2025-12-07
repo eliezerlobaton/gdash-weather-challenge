@@ -22,9 +22,6 @@ export const weatherApi = {
 
       const rawData = response.data
 
-      // Handle NestJS TransformInterceptor wrapping
-      // The response might be { data: { data: [], meta: {} }, statusCode: ... }
-      // Or just { data: [], meta: {} } if interceptor is disabled
       const apiResponse = (rawData as { data?: { data?: unknown } }).data?.data ? (rawData as { data: unknown }).data : rawData
 
       // Type guard or assertion
