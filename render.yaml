@@ -2,7 +2,7 @@ services:
   # 1. Frontend (Static Site)
   - type: web
     name: gdash-frontend
-    env: static
+    runtime: static
     buildCommand: cd packages/gdash-frontend && pnpm install && pnpm run build
     staticPublishPath: packages/gdash-frontend/dist
     envVars:
@@ -17,7 +17,7 @@ services:
   # 2. API (NestJS)
   - type: web
     name: gdash-api
-    env: node
+    runtime: node
     buildCommand: cd packages/gdash-api && pnpm install && pnpm run build
     startCommand: cd packages/gdash-api && pnpm run start:prod
     envVars:
@@ -35,7 +35,7 @@ services:
   # 3. RabbitMQ Worker (Go) - Deployed as Web Service for Free Tier
   - type: web
     name: rabbitmq-worker
-    env: go
+    runtime: go
     buildCommand: cd packages/rabbitmq-worker && go build -o worker_bin main.go
     startCommand: cd packages/rabbitmq-worker && ./worker_bin
     envVars:
@@ -49,7 +49,7 @@ services:
   # 4. Weather Data Collector (Python) - Deployed as Web Service for Free Tier
   - type: web
     name: weather-data-collector
-    env: python
+    runtime: python
     buildCommand: cd packages/weather-data-collector && pip install -r requirements.txt
     startCommand: cd packages/weather-data-collector && python main.py
     envVars:
