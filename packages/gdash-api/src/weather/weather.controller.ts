@@ -27,7 +27,7 @@ export class WeatherController {
   constructor(
     private weatherService: WeatherService,
     private weatherInsightsService: WeatherInsightsService,
-  ) {}
+  ) { }
 
   @Post('logs')
   @ApiOperation({
@@ -138,13 +138,23 @@ export class WeatherController {
     },
   })
   @ApiResponse({ status: 401, description: 'Token JWT inválido ou ausente' })
-  async getLogs(@Query('limit') limit = '100', @Query('page') page = '1') {
+  async getLogs(
+    @Query('limit') limit = '100',
+    @Query('page') page = '1',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
     const limitNum = parseInt(limit, 10);
     const pageNum = parseInt(page, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    const logs = await this.weatherService.getLogs(limitNum, skip);
-    const total = await this.weatherService.getTotalLogs();
+    const logs = await this.weatherService.getLogs(
+      limitNum,
+      skip,
+      startDate,
+      endDate,
+    );
+    const total = await this.weatherService.getTotalLogs(startDate, endDate);
 
     return {
       data: logs,

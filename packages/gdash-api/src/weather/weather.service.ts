@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 export class WeatherService {
   constructor(
     @InjectModel('WeatherLog') private weatherModel: Model<WeatherLog>,
-  ) {}
+  ) { }
 
   async createLog(data: CreateWeatherLogDto): Promise<WeatherLog> {
     const log = new this.weatherModel({
@@ -32,17 +32,50 @@ export class WeatherService {
     return 'agradavel';
   }
 
-  async getLogs(limit: number, skip: number): Promise<WeatherLog[]> {
+  async getLogs(
+    limit: number,
+    skip: number,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<WeatherLog[]> {
+    const query: any = {};
+
+    if (startDate || endDate) {
+      query.timestamp = {};
+      if (startDate) {
+        query.timestamp.$gte = new Date(startDate).toISOString();
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
+        query.timestamp.$lte = end.toISOString();
+      }
+    }
+
     return this.weatherModel
-      .find()
+      .find(query)
       .skip(skip)
       .limit(limit)
       .sort({ timestamp: -1 })
       .exec();
   }
 
-  async getTotalLogs(): Promise<number> {
-    return this.weatherModel.countDocuments();
+  async getTotalLogs(startDate?: string, endDate?: string): Promise<number> {
+    const query: any = {};
+
+    if (startDate || endDate) {
+      query.timestamp = {};
+      if (startDate) {
+        query.timestamp.$gte = new Date(startDate).toISOString();
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
+        query.timestamp.$lte = end.toISOString();
+      }
+    }
+
+    return this.weatherModel.countDocuments(query);
   }
 
   async exportCSV(): Promise<string> {
