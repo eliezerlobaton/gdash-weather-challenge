@@ -11,11 +11,11 @@ export interface User {
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
     try {
-      const response = await apiClient.post<LoginResponse>('/auth/login', {
+      const response = await apiClient.post<{ data: LoginResponse }>('/auth/login', {
         email,
         password,
       })
-      return response.data
+      return response.data.data
     } catch (error: unknown) {
       throw new Error(handleApiError(error))
     }
@@ -23,12 +23,12 @@ export const authApi = {
 
   register: async (name: string, email: string, password: string): Promise<AuthResponse> => {
     try {
-      const response = await apiClient.post<AuthResponse>('/users', {
+      const response = await apiClient.post<{ data: AuthResponse }>('/users', {
         name,
         email,
         password,
       })
-      return response.data
+      return response.data.data
     } catch (error: unknown) {
       throw new Error(handleApiError(error))
     }
