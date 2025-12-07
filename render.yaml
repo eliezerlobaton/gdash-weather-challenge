@@ -7,10 +7,7 @@ services:
     staticPublishPath: packages/gdash-frontend/dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: gdash-api
-          property: url
+        sync: false # User must provide this in Render Dashboard (API Service URL)
       - key: VITE_STARWARS_API_URL
         value: https://swapi.dev/api
 
