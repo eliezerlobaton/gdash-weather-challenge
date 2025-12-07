@@ -9,6 +9,10 @@ services:
       - fromGroup: gdash-challenge
       - key: VITE_STARWARS_API_URL
         value: https://starwars-databank-server.vercel.app/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
 
   # 2. API (NestJS)
   - type: web
