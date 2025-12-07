@@ -3,3 +3,4 @@
 # IDE/Editor specific
 **/pyrightconfig.json
 
+node_modules
