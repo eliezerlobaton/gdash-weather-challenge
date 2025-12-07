@@ -1,6 +1,6 @@
 services:
   # 1. Frontend (Static Site)
-  - type: web
+  - type: pwa
     name: gdash-frontend
     runtime: static
     buildCommand: cd packages/gdash-frontend && pnpm install && pnpm run build
