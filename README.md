@@ -90,13 +90,15 @@ sequenceDiagram
 - **Stack:** Python 3.13, `requests`, `pika` (RabbitMQ client).
 - **Funcionamento:** Um script que roda em loop (cron job simulado), consulta a API Open-Meteo para obter dados climáticos da localização configurada e publica esses dados brutos na fila `weather_data` do RabbitMQ.
 
-### 2. 🐹 RabbitMQ Worker (Go)
+### 2. 🐇 RabbitMQ Worker (Go)
 **Responsabilidade:** Processamento de alta performance e desacoplamento.
+
 - **Stack:** Go 1.25, `amqp091-go`.
 - **Funcionamento:** Consome mensagens da fila `weather_data`. Sua função é garantir que os dados sejam entregues à API principal. Ele implementa lógica de retry e confirmação (ACK) apenas após o sucesso da requisição HTTP para a API.
 
-### 3. 🦅 Backend API (NestJS)
+### 3. 🐈‍⬛ Backend API (NestJS)
 **Responsabilidade:** Regras de negócio, persistência e segurança.
+
 - **Stack:** Node.js, NestJS, Mongoose, JWT, Swagger.
 - **Funcionalidades:**
   - **Auth:** Autenticação JWT e gerenciamento de usuários.
@@ -104,8 +106,9 @@ sequenceDiagram
   - **Insights:** Gera análises estatísticas sobre os dados históricos.
   - **Export:** Gera relatórios em CSV e XLSX.
 
-### 4. 💻 Frontend Dashboard (React)
+### 4. ⚛️ Frontend Dashboard (React)
 **Responsabilidade:** Visualização de dados e interação do usuário.
+
 - **Stack:** React, Vite, Tailwind CSS, shadcn/ui, Recharts.
 - **Funcionalidades:**
   - Dashboard interativo com gráficos e tabelas.
@@ -116,7 +119,7 @@ sequenceDiagram
 
 ---
 
-## 🚀 Como Rodar o Projeto
+## 🚀 Como Executar o Projeto
 
 ### Pré-requisitos
 - **Docker** e **Docker Compose** instalados.
@@ -178,6 +181,3 @@ O pipeline é acionado automaticamente em **Push** e **Pull Requests** para a br
 └── README.md                 # Documentação
 ```
 
----
-
-Feito com 💜 para o desafio **GDASH**.
